@@ -24,6 +24,18 @@
         android:text="Add Stopwatch"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"
+        />
+
+    <EditText
+        android:id="@+id/timeInputEt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toStartOf="@+id/add_new_stopwatch_button"
+        app:layout_constraintBottom_toBottomOf="@+id/add_new_stopwatch_button"
         app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
