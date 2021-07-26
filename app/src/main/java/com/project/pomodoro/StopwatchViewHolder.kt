@@ -30,7 +30,7 @@ class StopwatchViewHolder(
         binding.startPauseButton.setOnClickListener {
             if (stopwatch.isStarted) {
                 listener.stop(stopwatch.id, stopwatch.currentMs)
-                binding.customViewTwo.setPeriod(PERIOD)
+                binding.customViewTwo.setPeriod(stopwatch.currentMs)
             } else {
                 listener.start(stopwatch.id)
             }
@@ -59,17 +59,25 @@ class StopwatchViewHolder(
         binding.blinkingIndicator.isInvisible = true
         (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
     }
-
+    private var current = 0L
     private fun getCountDownTimer(stopwatch: Stopwatch): CountDownTimer {
-        return object  : CountDownTimer(PERIOD, UNIT_TEN_MS) {
+        return object : CountDownTimer(stopwatch.currentMs, UNIT_TEN_MS) {
             val interval = UNIT_TEN_MS
             override fun onTick(millisUntilFinished: Long) {
+
                 stopwatch.currentMs -= interval
+                current += interval
+                binding.customViewTwo.setCurrent(current)
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+
+
             }
 
             override fun onFinish() {
                 binding.stopwatchTimer.text = stopwatch.currentMs.displayTime()
+                binding.customViewTwo.setCurrent(stopwatch.currentMs)
+                binding.blinkingIndicator.isInvisible = true
+                (binding.blinkingIndicator.background as? AnimationDrawable)?.stop()
             }
 
         }
@@ -81,10 +89,9 @@ class StopwatchViewHolder(
         }
         val h = this / 1000 / 3600
         val m = this / 1000 % 3600 / 60
-        val s = this / 1000 / 10
-        val ms = this % 1000 / 10
+        val s = this / 1000 % 60
 
-        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}:${displaySlot(ms)}"
+        return "${displaySlot(h)}:${displaySlot(m)}:${displaySlot(s)}"
     }
 
     private fun displaySlot(count: Long): String {
@@ -96,8 +103,8 @@ class StopwatchViewHolder(
     }
 
     private companion object {
-        private const val START_TIME = "00:00:00:00"
-        private const val UNIT_TEN_MS = 10L
+        private const val START_TIME = "00:00:00"
+        private const val UNIT_TEN_MS = 1000L
         private const val PERIOD  = 1000L * 60L * 60L * 24L // Day
     }
 }

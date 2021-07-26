@@ -28,8 +28,8 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
         }
 
         binding?.addNewStopwatchButton?.setOnClickListener {
-            val inputTime = binding?.timeInputEt?.text.toString()
-            stopWatches.add(Stopwatch(nextId, 100, false))
+            val inputTime = binding?.timeInputEt?.text.toString().toInt()
+            stopWatches.add(Stopwatch(nextId++, (inputTime*60*1000).toLong(), false))
             watchAdapter.submitList(stopWatches.toList())
         }
     }
