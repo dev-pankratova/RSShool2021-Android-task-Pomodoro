@@ -1,11 +1,9 @@
 package com.project.pomodoro
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.Editable
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.pomodoro.databinding.ActivityMainBinding
-import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity(), StopwatchListener {
 
@@ -28,14 +26,26 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
         }
 
         binding?.addNewStopwatchButton?.setOnClickListener {
-            val inputTime = binding?.timeInputEt?.text.toString().toInt()
-            stopWatches.add(Stopwatch(nextId++, (inputTime*60*1000).toLong(), false))
-            watchAdapter.submitList(stopWatches.toList())
+            if (!binding?.timeInputEt?.text.isNullOrEmpty()) {
+                val inputTime = binding?.timeInputEt?.text.toString().toInt()
+                stopWatches.add(
+                    Stopwatch(
+                        nextId++,
+                        (inputTime * 60 * 1000).toLong(),
+                        (inputTime * 60 * 1000).toLong(),
+                        false
+                    )
+                )
+                watchAdapter.submitList(stopWatches.toList())
+            }
         }
     }
 
     override fun start(id: Int) {
-        changeStopwatch(id, null, true)
+        /*for (watch in stopWatches) {
+            if (watch.id == id)*/ changeStopwatch(id, null, true)
+        /*else stop(watch.id, watch.currentMs)
+    }*/
     }
 
     override fun stop(id: Int, currentMs: Long) {
@@ -47,7 +57,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     }
 
     override fun delete(id: Int) {
-        stopWatches.remove(stopWatches.find { it.id == id})
+        stopWatches.remove(stopWatches.find { it.id == id })
         watchAdapter.submitList(stopWatches.toList())
     }
 
@@ -55,9 +65,13 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
         val newTimers = mutableListOf<Stopwatch>()
         stopWatches.forEach {
             if (it.id == id) {
-                newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, isStarted))
+                newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, it.periodMs, isStarted))
             } else {
-                newTimers.add(it)
+                newTimers.add(Stopwatch(it.id, it.currentMs, it.periodMs, false))
+                /*if (from == "stop") {s
+                    Collections.replaceAll(newTimers.toList(), true, false)
+                    //newTimers.replaceAll()
+                }*/
             }
         }
         watchAdapter.submitList(newTimers)

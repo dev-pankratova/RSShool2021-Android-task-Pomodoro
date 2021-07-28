@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:ems="5"
-        android:inputType="textPersonName"
+        android:inputType="number"
         app:layout_constraintBottom_toBottomOf="@+id/add_new_stopwatch_button"
         app:layout_constraintEnd_toStartOf="@+id/add_new_stopwatch_button"
         app:layout_constraintStart_toStartOf="parent" />

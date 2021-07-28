@@ -41,7 +41,7 @@ class CustomView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (periodMs == 0L || currentMs == 0L) return
-        val startAngel = (((currentMs % periodMs).toFloat() / periodMs) * 360)
+        val startAngel = 360-(((currentMs % periodMs).toFloat() / periodMs) * 360)
 
         canvas.drawArc(
             0f,
@@ -60,7 +60,7 @@ class CustomView @JvmOverloads constructor(
      */
     fun setCurrent(current: Long) {
         currentMs = current
-        invalidate()
+        postInvalidate()
     }
 
     /**
