@@ -1,13 +1,20 @@
 package com.project.pomodoro
 
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
+import android.arch.lifecycle.ProcessLifecycleOwner
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.pomodoro.databinding.ActivityMainBinding
+import com.project.pomodoro.utils.*
 
-class MainActivity : AppCompatActivity(), StopwatchListener {
+class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     private var binding: ActivityMainBinding? = null
+    private var startTime = 0L
 
     private var watchAdapter = WatchAdapter(this)
     private var stopWatches = mutableListOf<Stopwatch>()
@@ -15,7 +22,9 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        startTime = System.currentTimeMillis()
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         binding?.let { setContentView(it.root) }
@@ -42,10 +51,7 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
     }
 
     override fun start(id: Int) {
-        /*for (watch in stopWatches) {
-            if (watch.id == id)*/ changeStopwatch(id, null, true)
-        /*else stop(watch.id, watch.currentMs)
-    }*/
+        changeStopwatch(id, null, true)
     }
 
     override fun stop(id: Int, currentMs: Long) {
@@ -68,15 +74,26 @@ class MainActivity : AppCompatActivity(), StopwatchListener {
                 newTimers.add(Stopwatch(it.id, currentMs ?: it.currentMs, it.periodMs, isStarted))
             } else {
                 newTimers.add(Stopwatch(it.id, it.currentMs, it.periodMs, false))
-                /*if (from == "stop") {s
-                    Collections.replaceAll(newTimers.toList(), true, false)
-                    //newTimers.replaceAll()
-                }*/
             }
         }
         watchAdapter.submitList(newTimers)
         stopWatches.clear()
         stopWatches.addAll(newTimers)
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onAppBackGrounded() {
+        val startIntent = Intent(this, ForegroundService::class.java)
+        startIntent.putExtra(COMMAND_ID, COMMAND_START)
+        startIntent.putExtra(STARTED_TIMER_TIME_MS, startTime)
+        startService(startIntent)
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun onAppForegrounded() {
+        val stopIntent = Intent(this, ForegroundService::class.java)
+        stopIntent.putExtra(COMMAND_ID, COMMAND_STOP)
+        startService(stopIntent)
     }
 
     override fun onDestroy() {

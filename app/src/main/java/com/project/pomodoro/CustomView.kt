@@ -14,8 +14,8 @@ class CustomView @JvmOverloads constructor(
     @AttrRes defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var periodMs = 0L
-    private var currentMs = 0L
+    private var periodMs = 0F
+    private var currentMs = 0F
     private var color = 0
     private var style = FILL
     private val paint = Paint()
@@ -40,8 +40,8 @@ class CustomView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (periodMs == 0L || currentMs == 0L) return
-        val startAngel = 360-(((currentMs % periodMs).toFloat() / periodMs) * 360)
+        if (periodMs == 0F || currentMs == 0F) return
+        val startAngel = ((periodMs - currentMs) / periodMs) * 360
 
         canvas.drawArc(
             0f,
@@ -59,7 +59,7 @@ class CustomView @JvmOverloads constructor(
      * Set lasted milliseconds
      */
     fun setCurrent(current: Long) {
-        currentMs = current
+        currentMs = current.toFloat()
         postInvalidate()
     }
 
@@ -67,7 +67,7 @@ class CustomView @JvmOverloads constructor(
      * Set time period
      */
     fun setPeriod(period: Long) {
-        periodMs = period
+        periodMs = period.toFloat()
     }
 
     private companion object {
