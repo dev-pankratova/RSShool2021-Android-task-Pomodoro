@@ -22,7 +22,7 @@ class ForegroundService : Service() {
 
     private val builder by lazy {
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Simple Timer")
+            .setContentTitle("Pomodoro Timer")
             .setContentText("temp")
             .setGroup("Timer")
             .setGroupSummary(false)
@@ -30,7 +30,7 @@ class ForegroundService : Service() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(getPendingIntent())
             .setSilent(true)
-            .setSmallIcon(R.drawable.ic_baseline_access_alarm_24)
+            .setSmallIcon(R.drawable.ic_baseline_alarm_24)
     }
 
     override fun onCreate() {
@@ -52,14 +52,15 @@ class ForegroundService : Service() {
         when (intent?.extras?.getString(COMMAND_ID) ?: INVALID) {
             COMMAND_START -> {
                 val startTime = intent?.extras?.getLong(STARTED_TIMER_TIME_MS) ?: return
-                commandStart(startTime)
+                val periodTime = intent.extras?.getLong(PERIOD_TIME_MS) ?: return
+                commandStart(periodTime, startTime)
             }
             COMMAND_STOP -> commandStop()
             INVALID -> return
         }
     }
 
-    private fun commandStart(startTime: Long) {
+    private fun commandStart(periodTime: Long, startTime: Long) {
         if (isServiceStarted) {
             return
         }
@@ -67,23 +68,22 @@ class ForegroundService : Service() {
         try {
             moveToStartedState()
             startForegroundAndShowNotification()
-            continueTimer(startTime)
+            continueTimer(periodTime, startTime)
         } finally {
             isServiceStarted = true
         }
     }
 
-    private fun continueTimer(startTime: Long) {
+    private fun continueTimer(periodTime: Long, startTime: Long) {
+        var time = startTime
         job = GlobalScope.launch(Dispatchers.Main) {
-            while (true) {
-                notificationManager?.notify(
-                    NOTIFICATION_ID,
-                    getNotification(
-                        (System.currentTimeMillis() - startTime).displayTime().dropLast(3)
-                    )
-                )
-                delay(INTERVAL)
-            }
+           // while (true) {
+                while (time != 0L) {
+                    notificationManager?.notify(NOTIFICATION_ID, getNotification((periodTime - time).displayTime()/*.dropLast(3)*/))
+                    time = time.minus(INTERVAL)
+                }
+                delay(1000L)
+           // }
         }
     }
 

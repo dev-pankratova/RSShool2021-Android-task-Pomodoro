@@ -5,17 +5,25 @@ import android.graphics.drawable.AnimationDrawable
 import android.os.CountDownTimer
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isInvisible
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.project.pomodoro.databinding.WatchItemBinding
 import com.project.pomodoro.utils.displayTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class StopwatchViewHolder(
     private val binding: WatchItemBinding,
     private val listener: StopwatchListener,
+    private val timeListener: TimeListener,
     private val resources: Resources
 ) : RecyclerView.ViewHolder(binding.root) {
 
     private var timer: CountDownTimer? = null
+
+    //private val scope = CoroutineScope(Dispatchers.IO)
 
     fun bind(stopwatch: Stopwatch) {
         binding.stopwatchTimer.text = stopwatch.currentMs?.displayTime()
@@ -83,7 +91,10 @@ class StopwatchViewHolder(
 
                 stopwatch.currentMs = stopwatch.currentMs?.minus(interval)
 
-                stopwatch.currentMs?.let { binding.customViewTwo.setCurrent(it) }
+                stopwatch.currentMs?.let {
+                    binding.customViewTwo.setCurrent(it)
+                    stopwatch.periodMs?.let { it1 -> timeListener.getTime(it1, it) }
+                }
                 binding.stopwatchTimer.text = stopwatch.currentMs?.displayTime()
             }
 
