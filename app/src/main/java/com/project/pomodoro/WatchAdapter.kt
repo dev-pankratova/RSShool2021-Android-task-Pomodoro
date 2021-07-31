@@ -6,12 +6,12 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import com.project.pomodoro.databinding.WatchItemBinding
 
-class WatchAdapter(private val listener: StopwatchListener, private val ltimeLstener: TimeListener): ListAdapter<Stopwatch, StopwatchViewHolder>(itemComparator) {
+class WatchAdapter(private val listener: StopwatchListener): ListAdapter<Stopwatch, StopwatchViewHolder>(itemComparator) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StopwatchViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
         val binding = WatchItemBinding.inflate(layoutInflater, parent, false)
-        return StopwatchViewHolder(binding, listener, ltimeLstener, binding.root.context.resources)
+        return StopwatchViewHolder(binding, listener, binding.root.context.resources)
     }
 
     override fun onBindViewHolder(holder: StopwatchViewHolder, position: Int) {

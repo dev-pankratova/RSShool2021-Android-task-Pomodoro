@@ -3,59 +3,101 @@ package com.project.pomodoro
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.project.pomodoro.databinding.ActivityMainBinding
-import com.project.pomodoro.utils.*
+import com.project.pomodoro.utils.COMMAND_ID
+import com.project.pomodoro.utils.COMMAND_START
+import com.project.pomodoro.utils.COMMAND_STOP
+import com.project.pomodoro.utils.ForegroundService
 
-class MainActivity : AppCompatActivity(), StopwatchListener, TimeListener, LifecycleObserver {
+class MainActivity : AppCompatActivity(), StopwatchListener, LifecycleObserver {
 
     private var binding: ActivityMainBinding? = null
-    private var startTime = 0L
-    private var periodTime = 0L
 
-    private var watchAdapter = WatchAdapter(this, this)
+    private var watchAdapter = WatchAdapter(this)
     private var stopWatches = mutableListOf<Stopwatch>()
     private var nextId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        //startTime = System.currentTimeMillis()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         binding?.let { setContentView(it.root) }
 
-        binding?.recycler?.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = watchAdapter
-        }
+        clearFocusEditTxt()
+        initAdapter()
+        addConstraintsToInput()
 
         binding?.addNewStopwatchButton?.setOnClickListener {
-            if (!binding?.timeInputEt?.text.isNullOrEmpty()) {
-                val inputTime = binding?.timeInputEt?.text.toString().toInt()
+            if (!binding?.hourInputEt?.text.isNullOrEmpty() || !binding?.minuteInputEt?.text.isNullOrEmpty()) {
+                var inputHours: Int? = null
+                var inputMinutes: Int? = null
+                var commonTimeInMilli: Long? = null
+
+                if (!binding?.hourInputEt?.text.isNullOrEmpty()) inputHours =
+                    binding?.hourInputEt?.text.toString().toInt()
+                if (!binding?.minuteInputEt?.text.isNullOrEmpty()) inputMinutes =
+                    binding?.minuteInputEt?.text.toString().toInt()
+
+                if (inputHours != null && inputMinutes != null) commonTimeInMilli =
+                    (inputHours * 3600 * 1000 + inputMinutes * 60 * 1000).toLong()
+                else if (inputHours != null && inputMinutes == null) commonTimeInMilli =
+                    (inputHours * 3600 * 1000).toLong()
+                else if (inputHours == null && inputMinutes != null) commonTimeInMilli =
+                    (inputMinutes * 60 * 1000).toLong()
+
                 stopWatches.add(
                     Stopwatch(
                         nextId++,
-                        (inputTime * 60 * 1000).toLong(),
-                        (inputTime * 60 * 1000).toLong(),
+                        commonTimeInMilli,
+                        commonTimeInMilli,
                         false
                     )
                 )
                 watchAdapter.submitList(stopWatches.toList())
+                clearEditTxts()
+            }
+        }
+    }
+
+    private fun initAdapter() {
+        binding?.recycler?.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = watchAdapter
+        }
+    }
+
+    private fun addConstraintsToInput() {
+        binding?.hourInputEt?.doAfterTextChanged {
+            if (!binding?.hourInputEt?.text.isNullOrEmpty()) {
+                if (binding?.hourInputEt?.text.toString()
+                        .toInt() >= 25
+                ) binding?.hourInputEt?.setText("")
+            }
+        }
+
+        binding?.minuteInputEt?.doAfterTextChanged {
+            if (!binding?.minuteInputEt?.text.isNullOrEmpty()) {
+                if (binding?.minuteInputEt?.text.toString()
+                        .toInt() >= 60
+                ) binding?.minuteInputEt?.setText("")
             }
         }
     }
 
     override fun start(id: Int) {
+        clearEditTxts()
         changeStopwatch(id, null, true)
     }
 
     override fun stop(id: Int, currentMs: Long) {
+        clearEditTxts()
         changeStopwatch(id, currentMs, false)
     }
 
@@ -82,17 +124,10 @@ class MainActivity : AppCompatActivity(), StopwatchListener, TimeListener, Lifec
         stopWatches.addAll(newTimers)
     }
 
-    override fun getTime(period: Long, time: Long) {
-        periodTime = period
-        startTime = time
-    }
-
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun onAppBackGrounded() {
         val startIntent = Intent(this, ForegroundService::class.java)
         startIntent.putExtra(COMMAND_ID, COMMAND_START)
-        startIntent.putExtra(PERIOD_TIME_MS, periodTime)
-        startIntent.putExtra(STARTED_TIMER_TIME_MS, startTime)
         startService(startIntent)
     }
 
@@ -103,14 +138,19 @@ class MainActivity : AppCompatActivity(), StopwatchListener, TimeListener, Lifec
         startService(stopIntent)
     }
 
+    private fun clearFocusEditTxt() {
+        binding?.root?.setOnClickListener {
+            clearEditTxts()
+        }
+    }
+
+    private fun clearEditTxts() {
+        binding?.hourInputEt?.clearFocus()
+        binding?.minuteInputEt?.clearFocus()
+    }
+
     override fun onDestroy() {
         binding = null
         super.onDestroy()
     }
-
-    private companion object {
-        const val INTERVAL = 1000L
-    }
-
-
 }

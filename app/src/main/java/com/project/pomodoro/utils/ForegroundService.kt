@@ -13,11 +13,14 @@ import androidx.core.app.NotificationCompat
 import com.project.pomodoro.MainActivity
 import com.project.pomodoro.R
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 
 class ForegroundService : Service() {
 
     private var isServiceStarted = false
     private var notificationManager: NotificationManager? = null
+
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
     private var job: Job? = null
 
     private val builder by lazy {
@@ -51,16 +54,14 @@ class ForegroundService : Service() {
     private fun processCommand(intent: Intent?) {
         when (intent?.extras?.getString(COMMAND_ID) ?: INVALID) {
             COMMAND_START -> {
-                val startTime = intent?.extras?.getLong(STARTED_TIMER_TIME_MS) ?: return
-                val periodTime = intent.extras?.getLong(PERIOD_TIME_MS) ?: return
-                commandStart(periodTime, startTime)
+                commandStart()
             }
             COMMAND_STOP -> commandStop()
             INVALID -> return
         }
     }
 
-    private fun commandStart(periodTime: Long, startTime: Long) {
+    private fun commandStart() {
         if (isServiceStarted) {
             return
         }
@@ -68,22 +69,17 @@ class ForegroundService : Service() {
         try {
             moveToStartedState()
             startForegroundAndShowNotification()
-            continueTimer(periodTime, startTime)
+            continueTimer()
         } finally {
             isServiceStarted = true
         }
     }
 
-    private fun continueTimer(periodTime: Long, startTime: Long) {
-        var time = startTime
-        job = GlobalScope.launch(Dispatchers.Main) {
-           // while (true) {
-                while (time != 0L) {
-                    notificationManager?.notify(NOTIFICATION_ID, getNotification((periodTime - time).displayTime()/*.dropLast(3)*/))
-                    time = time.minus(INTERVAL)
-                }
-                delay(1000L)
-           // }
+    private fun continueTimer() {
+        job = serviceScope.launch(Dispatchers.Main) {
+            currentTime.collect {
+                notificationManager?.notify(NOTIFICATION_ID,  getNotification(it.displayTime()))
+            }
         }
     }
 
@@ -141,6 +137,5 @@ class ForegroundService : Service() {
 
         private const val CHANNEL_ID = "Channel_ID"
         private const val NOTIFICATION_ID = 777
-        private const val INTERVAL = 1000L
     }
 }
